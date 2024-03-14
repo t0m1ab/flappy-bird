@@ -4,20 +4,41 @@
 
 **Date:** March 2024
 
-## 0 - Setup
+## Setup
 
-<!-- * Clone the repository:
+Install the requirements:
 ```bash
-git clone git@github.com:t0m1ab/CS3A_RL_project.git
-``` -->
+pip install -r requirements.txt
+```
 
-* Install `flappyrl` as a package in edit mode (see config in `pyproject.toml`): 
+Install the flappy bird environments:
 ```bash
-mv flappybird/
-pip install -e .
-``` 
+pip install git+https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym.git
+```
 
-* Test the installation using the newly declared command `flappyrl`: 
+## Files
+
+* `agents.py`: implementation of tabular RL agents
+* `trainers.py`: implementation of trainers for the agents
+* `utils.py`: utility functions and variables
+* `main.py`: launch training/agent demo
+
+## Training & Demo
+
+Train a Monte Carlo agent:
 ```bash
-flappyrl --test
-``` 
+python main.py --mc
+```
+
+Train a Sarsa(lambda) agent:
+```bash
+python main.py --sarsa-lambda
+```
+
+Demo with a save agent:
+```bash
+python main.py --mc --demo
+python main.py --sarsa-lambda --demo
+```
+
+Change all environment/training parameters directly in `main.py`.
