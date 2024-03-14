@@ -1,0 +1,8 @@
+.DS_store
+.venv/*
+flappy_bird_env/
+**/__pycache__/
+**/models/
+**/outputs/
+**/notes.md
+**/sandbox.ipynb
