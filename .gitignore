@@ -3,6 +3,6 @@
 flappy_bird_env/
 **/__pycache__/
 **/models/
-**/outputs/
+**/outputs**/
 **/notes.md
 **/sandbox.ipynb

@@ -94,7 +94,7 @@ def main():
             n_episodes=EPISODES,
             discount_factor=DISCOUNT_FACTOR,
             final_epsilon=FINAL_EPSILON,
-            learning_rate=None,
+            learning_rate=LEARNING_RATE,
             n_eval=100,
             max_episode_length_eval=1000,
         )

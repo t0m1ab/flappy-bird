@@ -107,6 +107,10 @@ class MCAgent(Agent):
         super().__init__(action_space_size=action_space_size, discount_factor=discount_factor)
         self.lr = lr
         self.mean_return = defaultdict(lambda: (0,0)) # returns[x] is (0,0) by default for any x and represents (n, R_n) [see S&B section 2.4]
+        if self.lr is not None:
+            print(f"Using learning rate {self.lr} update")
+        else:
+            print(f"Using mean return update")
     
     def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
         """
@@ -164,7 +168,6 @@ class SARSALambdaAgent(Agent):
         self.eligibility = defaultdict(lambda: [0 for _ in range(self.action_space_size)]) # eligibility[(s,a)] is 0 by default for any pair (state,action)
         self.lr = lr
         self.trace_decay = trace_decay
-        # self.type = "accumulate" # "replace"
 
     def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
         """
@@ -200,12 +203,7 @@ class SARSALambdaAgent(Agent):
             for a in range(self.action_space_size):
                 self.q_values[s][a] += self.lr * td_error * self.eligibility[s][a]
                 self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
-            # elif self.type == "replace":
-            #     if s == state:
-            #         self.eligibility[s] = [0 for _ in range(self.action_space_size)]
-            #     else:
-            #         for a in range(self.action_space_size):
-            #             self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
+
         # sarsa
         # self.q_values[state][action] = q_value + self.lr * td_error
 

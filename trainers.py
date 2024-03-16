@@ -95,6 +95,8 @@ class Trainer():
         # save data in json
         with open(os.path.join(path, f"{self.experiment_name}_eval_durations.json"), "w") as f:
             f.write(json.dumps({
+                "experiment_name": self.experiment_name,
+                "max_episode_length_eval": self.max_episode_length_eval,
                 "train_episode_indexes": self.train_episode_indexes,
                 "eval_episode_durations": self.eval_episode_durations,
             }))
@@ -144,6 +146,7 @@ class Trainer():
         # save data in json
         with open(os.path.join(path, f"{self.experiment_name}_train_durations.json"), "w") as f:
             f.write(json.dumps({
+                "experiment_name": self.experiment_name,
                 "train_episode_durations": self.train_episode_durations,
             }))
 
