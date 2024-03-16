@@ -40,7 +40,7 @@ class Agent:
         return (int(str_x), int(str_y))
 
     @staticmethod
-    def from_pretrained(agent_filename: str, path: str = None) -> "MCAgent":
+    def from_pretrained(agent_filename: str, path: str = None) -> "MCAgent | SARSALambdaAgent":
         """
         Load the agent from a json file.
         """
@@ -52,10 +52,16 @@ class Agent:
         with open(filepath, "r") as f:
             agent_dict = json.load(f)
 
-        agent = MCAgent(
-            action_space_size=agent_dict["action_space_size"], 
-            discount_factor=agent_dict["discount_factor"],
-        )
+        agent_constructor = None
+        if agent_dict["type"] == "MCAgent":
+            agent_constructor = MCAgent
+        elif agent_dict["type"] == "SARSALambdaAgent":
+            agent_constructor = SARSALambdaAgent
+        else:
+            raise ValueError(f"Invalid agent type {agent_dict['type']}")
+
+        agent = agent_constructor(action_space_size=agent_dict["action_space_size"])
+
         agent.q_values = defaultdict(lambda: [0 for _ in range(agent.action_space_size)])
         for k, v in agent_dict["q_values"].items():
             agent.q_values[Agent.parse_state(k)] = np.array(v)
@@ -76,8 +82,8 @@ class Agent:
         }
 
         json_dict = {
+            "type": self.__class__.__name__,
             "action_space_size": self.action_space_size,
-            "discount_factor": self.discount_factor,
             "q_values": serialized_q_values,
         }
 
@@ -92,8 +98,14 @@ class Agent:
 
 class MCAgent(Agent):
 
-    def __init__(self, action_space_size: int, discount_factor: float):
+    def __init__(
+            self, 
+            action_space_size: int, 
+            discount_factor: float = None,
+            lr: float = None,
+        ):
         super().__init__(action_space_size=action_space_size, discount_factor=discount_factor)
+        self.lr = lr
         self.mean_return = defaultdict(lambda: (0,0)) # returns[x] is (0,0) by default for any x and represents (n, R_n) [see S&B section 2.4]
     
     def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
@@ -132,8 +144,11 @@ class MCAgent(Agent):
             G = self.discount_factor * G + rewards[t+1]
             if not state_action_pairs[t] in state_action_pairs[:t]: # first visit of the (state, action) pair in the episode
                 state_t, action_t = state_action_pairs[t]
-                self.update_mean_return(state_t, action_t, return_value=G) # update the mean return for the (state_t, action_t) pair
-                self.q_values[state_t][action_t] = self.mean_return[state_action_pairs[t]][1]
+                if self.lr is None: # use mean return update
+                    self.update_mean_return(state_t, action_t, return_value=G)
+                    self.q_values[state_t][action_t] = self.mean_return[state_action_pairs[t]][1]
+                else: # use learning rate update
+                    self.q_values[state_t][action_t] += self.lr * (G - self.q_values[state_t][action_t])
 
 
 class SARSALambdaAgent(Agent):
@@ -141,15 +156,15 @@ class SARSALambdaAgent(Agent):
     def __init__(
             self, 
             action_space_size: int, 
-            discount_factor: float,
-            lr: float,
-            trace_decay: float,
+            discount_factor: float = None,
+            lr: float = None,
+            trace_decay: float = None,
         ):
         super().__init__(action_space_size=action_space_size, discount_factor=discount_factor)
         self.eligibility = defaultdict(lambda: [0 for _ in range(self.action_space_size)]) # eligibility[(s,a)] is 0 by default for any pair (state,action)
         self.lr = lr
         self.trace_decay = trace_decay
-        self.type = "accumulate" # "replace"
+        # self.type = "accumulate" # "replace"
 
     def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
         """
@@ -184,15 +199,13 @@ class SARSALambdaAgent(Agent):
         for s in self.q_values.keys():
             for a in range(self.action_space_size):
                 self.q_values[s][a] += self.lr * td_error * self.eligibility[s][a]
-            if self.type == "accumulate":
-                for a in range(self.action_space_size):
-                    self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
-            elif self.type == "replace":
-                if s == state:
-                    self.eligibility[s] = [0 for _ in range(self.action_space_size)]
-                else:
-                    for a in range(self.action_space_size):
-                        self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
+                self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
+            # elif self.type == "replace":
+            #     if s == state:
+            #         self.eligibility[s] = [0 for _ in range(self.action_space_size)]
+            #     else:
+            #         for a in range(self.action_space_size):
+            #             self.eligibility[s][a] *= (self.discount_factor * self.trace_decay)
         # sarsa
         # self.q_values[state][action] = q_value + self.lr * td_error
 
