@@ -8,7 +8,7 @@ import gymnasium as gym
 
 import text_flappy_bird_gym
 from agents import Agent, MCAgent, SARSALambdaAgent
-from utils import DEFAULT_OUTPUTS_PATH
+from configs import DEFAULT_OUTPUTS_PATH
 
 
 class Trainer():

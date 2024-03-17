@@ -6,7 +6,7 @@ import json
 import gymnasium as gym
 
 import text_flappy_bird_gym
-from utils import DEFAULT_MODELS_PATH
+from configs import DEFAULT_MODELS_PATH
 
 
 class Agent:
@@ -33,11 +33,11 @@ class Agent:
     
     @staticmethod
     def parse_state(str_state: str) -> tuple[int, int]:
-        """ "state=(x,y)" -> (x,y) """
-        if not str_state.startswith("state=") or not str_state.endswith(")"):
-            raise ValueError(f"Invalid state string {str_state}")
-        str_x, str_y = str_state.strip("state=(").strip(")").split(",")
-        return (int(str_x), int(str_y))
+        """ str: "x,y" -> tuple: (x,y) """
+        elements = str_state.split(",")
+        if not len(elements) == 2:
+            raise ValueError(f"Invalid state string: '{str_state}'. Should look like 'x,y'")
+        return (int(elements[0]), int(elements[1]))
 
     @staticmethod
     def from_pretrained(agent_filename: str, path: str = None) -> "MCAgent | SARSALambdaAgent":
@@ -78,7 +78,7 @@ class Agent:
         Path(path).mkdir(parents=True, exist_ok=True)
 
         serialized_q_values = {
-            f"state=({k[0]},{k[1]})": list(v) for k, v in self.q_values.items()
+            f"{k[0]},{k[1]}": list(v) for k, v in self.q_values.items()
         }
 
         json_dict = {

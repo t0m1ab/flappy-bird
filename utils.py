@@ -3,9 +3,11 @@ from pathlib import Path
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
 
-DEFAULT_OUTPUTS_PATH = os.path.join(os.getcwd(), "outputs/")
-DEFAULT_MODELS_PATH = os.path.join(os.getcwd(), "models/")
+from configs import DEFAULT_MODELS_PATH, DEFAULT_OUTPUTS_PATH
+from agents import Agent
 
 
 def plot_and_compare_train_episode_duration(
@@ -151,9 +153,62 @@ def plot_epsilon_scheduler(
     plt.close()
 
 
+def plot_state_value_function(agent_filename: str, path: str = None, save_only: bool = False):
+    """
+    Plot the state value function of a model stored in a json file.
+    """
+
+    agent_filename = agent_filename[:-5] if agent_filename.endswith(".json") else agent_filename # remove extension
+    agent = Agent.from_pretrained(agent_filename, path=path)
+
+    min_x, max_x = float('inf'), float('-inf')
+    min_y, max_y = float('inf'), float('-inf')
+    for (x,y) in agent.q_values.keys():
+        min_x = min(min_x, x)
+        max_x = max(max_x, x)
+        min_y = min(min_y, y)
+        max_y = max(max_y, y)
+
+    x_range = max_x - min_x + 1
+    y_range = max_y - min_y + 1
+    
+    x_values = np.arange(min_x, max_x + 1, step=1)
+    y_values = np.arange(min_y, max_y + 1, step=1)
+
+    x_mesh, y_mesh = np.meshgrid(x_values, y_values)
+
+    q_values = np.zeros((y_range, x_range)) # x_mesh.shape == y_mesh.shape
+    for (x,y), q in agent.q_values.items():
+        q_values[int(y-min_y), int(x-min_x)] = np.max(q)
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    
+    # Plot the surface.
+    surface = ax.plot_surface(x_mesh, y_mesh, q_values, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+
+    # Customize the z axis.
+    # ax.set_zlim(-1.01, 1.01)
+    # ax.zaxis.set_major_locator(LinearLocator(10))
+    # A StrMethodFormatter is used automatically
+    # ax.zaxis.set_major_formatter('{x:.0f}')
+    ax.set_zticks([])
+    ax.set_xlabel("dx")
+    ax.set_ylabel("dy")
+
+    # Add a color bar which maps values to colors.
+    fig.colorbar(surface, shrink=0.5, aspect=5)
+
+    plt.title(f"State value function of {agent_filename}")
+
+    if not save_only:
+        plt.show()
+    else:
+        plt.savefig(os.path.join(DEFAULT_OUTPUTS_PATH, f"state_value_function_{agent_filename}.png"))
+
+
 def main():
 
-    path = "outputs-base/"
+    path = "outputs/"
 
     plot_and_compare_train_episode_duration(
         json_file_1="mc_train_durations.json",
@@ -170,6 +225,11 @@ def main():
     )
 
     plot_epsilon_scheduler(path=path)
+
+    plot_state_value_function(agent_filename="MCAgent")
+    plot_state_value_function(agent_filename="SARSALambdaAgent")
+
+
 
 
 if __name__ == "__main__":

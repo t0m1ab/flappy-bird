@@ -42,3 +42,16 @@ python main.py --sarsa-lambda --demo
 ```
 
 Change all environment/training parameters directly in `main.py`.
+
+## Results
+
+### MC Agent
+
+<img src='./figures/mc_svalues_iso.png' width='500'>
+<img src='./figures/mc_svalues_top.png' width='500'>
+
+### Sarsa($\lambda$) Agent
+
+<img src='./figures/sarsa_svalues_iso.png' width='500'>
+
+<img src='./figures/sarsa_svalues_top.png' width='500'>
