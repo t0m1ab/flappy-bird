@@ -183,27 +183,21 @@ def plot_state_value_function(agent_filename: str, path: str = None, save_only: 
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     
-    # Plot the surface.
+    # 3D plot
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     surface = ax.plot_surface(x_mesh, y_mesh, q_values, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-
-    # Customize the z axis.
-    # ax.set_zlim(-1.01, 1.01)
-    # ax.zaxis.set_major_locator(LinearLocator(10))
-    # A StrMethodFormatter is used automatically
-    # ax.zaxis.set_major_formatter('{x:.0f}')
     ax.set_zticks([])
     ax.set_xlabel("dx")
     ax.set_ylabel("dy")
-
-    # Add a color bar which maps values to colors.
     fig.colorbar(surface, shrink=0.5, aspect=5)
-
     plt.title(f"State value function of {agent_filename}")
 
     if not save_only:
         plt.show()
     else:
         plt.savefig(os.path.join(DEFAULT_OUTPUTS_PATH, f"state_value_function_{agent_filename}.png"))
+
+    plt.close()
 
 
 def main():
@@ -228,8 +222,6 @@ def main():
 
     plot_state_value_function(agent_filename="MCAgent")
     plot_state_value_function(agent_filename="SARSALambdaAgent")
-
-
 
 
 if __name__ == "__main__":

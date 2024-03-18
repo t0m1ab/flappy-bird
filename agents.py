@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from collections import defaultdict
+from abc import abstractmethod
 import numpy as np
 import json
 import gymnasium as gym
@@ -91,9 +92,20 @@ class Agent:
             f.write(json.dumps(json_dict).encode("utf-8"))
 
         print(f"Agent {self} saved in {os.path.join(path, json_filename)}")
+    
+    @abstractmethod
+    def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
+        """
+		Returns an action following an epsilon-soft policy. If env is None and epsilon is None, the agent acts greedily (inference mode).
+		"""
+        raise NotImplementedError
 
-    def decay_epsilon(self) -> None:
-        self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
+    @abstractmethod
+    def update(self, *args, **kwargs) -> None:
+        """
+        Updates the Q-value of an action following a specific method.
+        """
+        raise NotImplementedError
 
 
 class MCAgent(Agent):
@@ -103,14 +115,17 @@ class MCAgent(Agent):
             action_space_size: int, 
             discount_factor: float = None,
             lr: float = None,
+            verbose: bool = False,
         ):
         super().__init__(action_space_size=action_space_size, discount_factor=discount_factor)
         self.lr = lr
         self.mean_return = defaultdict(lambda: (0,0)) # returns[x] is (0,0) by default for any x and represents (n, R_n) [see S&B section 2.4]
-        if self.lr is not None:
-            print(f"Using learning rate {self.lr} update")
-        else:
-            print(f"Using mean return update")
+        self.verbose = verbose
+        if self.verbose:
+            if self.lr is not None:
+                print(f"Using learning rate {self.lr} update")
+            else:
+                print(f"Using mean return update")
     
     def policy(self, state: tuple[int, int], env: gym.Env = None, epsilon: float = None) -> int:
         """

@@ -31,13 +31,6 @@ class Trainer():
         self.train_episode_indexes = [] # list of train episode indexes matching eavh evaluation phase
         self.eval_episode_durations = [] # list of lists of episode durations for each evaluation phase
     
-    def get_config_dict(self) -> dict:
-        return {
-            "n_episodes": self.n_episodes,
-            "discount_factor": self.discount_factor,
-            "final_epsilon": self.final_epsilon,
-        }
-    
     def eval(self, n_episodes: int, env: gym.Env = None, agent: Agent = None, verbose: bool = False) -> list[int]:
         """
         Evaluate the agent with n_episodes in the environment by taking greedy actions and returns the lenghts of these eval episodes.
@@ -171,7 +164,14 @@ class MCTrainer(Trainer):
         self.lr = learning_rate
         self.n_eval = n_eval
         self.max_episode_length_eval = max_episode_length_eval
-    
+
+    def get_config_dict(self) -> dict:
+        return {
+            "n_episodes": self.n_episodes,
+            "discount_factor": self.discount_factor,
+            "final_epsilon": self.final_epsilon,
+        }
+
     def train(self, env: gym.Env, experiment_name: str = None, save_plots: bool = False, save_agent: bool = False) -> MCAgent:
         
         # self.env = gym.wrappers.RecordEpisodeStatistics(env, deque_size=self.n_episodes)
@@ -338,7 +338,7 @@ def main():
     mc_trainer = MCTrainer(
         n_episodes=100,
         discount_factor=1.0,
-        epsilon=0.1,
+        final_epsilon=0.1,
     )
 
     print(f"{mc_trainer} is ready!")
@@ -349,7 +349,7 @@ def main():
         learnind_rate=0.01,
         trace_decay=0.9,
         discount_factor=1.0,
-        epsilon=0.1,
+        final_epsilon=0.1,
     )
 
     print(f"{sarsa_lambda_trainer} is ready!")
